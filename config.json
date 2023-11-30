@@ -1,0 +1,9 @@
+{
+	"timezone":480,
+	"format_enable":1,
+	"format":[
+		{ "name": "温度", "offset": 0, "bitoffset": 0, "bitsize": 16, "symbol": 1, "accuracy": 10},
+		{ "name": "湿度", "offset": 2, "bitoffset": 0, "bitsize": 8, "symbol": 0, "accuracy": 2},
+		{ "name": "状态", "offset": 3, "bitoffset": 0, "bitsize": 8, "symbol": 0, "accuracy": 1}
+	]
+}
