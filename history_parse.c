@@ -2,7 +2,7 @@
     > File Name: history_parse.c
     > Author: jimmy
     > Mail: 1074833353@qq.com 
-    > Created Time: 2021年08月31日 星期二 19时48分41秒
+    > Created Time: 2023年11月30日 星期二 14时48分41秒
  ************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,16 +14,20 @@
 #include "cJSON.h"
 
 static bool atoh(uint8_t *buffer_in, uint8_t size_in, uint8_t *buffer_out, uint8_t size_out);
-static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint16_t num);
+static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint8_t *num_info);
 static void format_convert(uint8_t sign, uint8_t byte_offset, uint8_t bit_offset, uint8_t bit_length, uint32_t accuracy, uint8_t *buffer, cJSON *element);
 
-int main(int arvc, char **argv)
+int main(int argc, char **argv)
 {
-    char *pdata = argv[1];
+    char *pdata = NULL;
     char *pconf = NULL;
     FILE *fp = NULL;
     cJSON *jsonroot = NULL;
-    uint16_t count = 0;
+
+    if(argc != 2) {
+        printf("Usage: %s <raw_data>\r\n", argv[0]);
+        return -1;
+    }
 
     fp = fopen("config.json", "r");
     if(fp) {
@@ -50,30 +54,27 @@ int main(int arvc, char **argv)
         fclose(fp);
     }
 
+    //计算总条数
+    uint16_t total_count = 0;
+    pdata = argv[1];
     do {
         pdata = strstr(pdata, "20ce");
         if(pdata) {
-            // char time_strb[9] = {0};
-            // char time_strl[9] = {0};
-            // unsigned int timestamp = 0;
-            // struct tm *ptm = NULL;
-            // memset(time_strb, 0, sizeof(time_strb));
-            // memset(time_strl, 0, sizeof(time_strl));
-            // memcpy(time_strb, pdata+4, 8);
-            // time_strl[0] = time_strb[6];
-            // time_strl[1] = time_strb[7];
-            // time_strl[2] = time_strb[4];
-            // time_strl[3] = time_strb[5];
-            // time_strl[4] = time_strb[2];
-            // time_strl[5] = time_strb[3];
-            // time_strl[6] = time_strb[0];
-            // time_strl[7] = time_strb[1];
-            // sscanf((char *)time_strl, "%x", &timestamp);
-            // time_t temp = timestamp;
-            // ptm = gmtime(&temp);
-            // printf("timestamp = %u, local:%s\r\n", timestamp, ctime(&temp));
+            total_count++;
+            pdata = pdata+2;
+        }
+    } while(pdata);
+
+    //逐条解析数据
+    uint16_t count = 0;
+    pdata = argv[1];
+    do {
+        char buffer[128] = {0};
+        pdata = strstr(pdata, "20ce");
+        if(pdata) {
             count++;
-            data_parse_and_dump(jsonroot, pdata+4, count);
+            snprintf(buffer, sizeof(buffer), "%d/%d", count, total_count);
+            data_parse_and_dump(jsonroot, pdata+4, buffer);
             pdata = pdata+2;
         }
     } while(pdata);
@@ -85,7 +86,7 @@ int main(int arvc, char **argv)
     return 0;
 }
 
-static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint16_t num)
+static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint8_t *num_info)
 {
     cJSON *parser_root = cJSON_CreateObject();
     cJSON *item = NULL; 
@@ -105,7 +106,7 @@ static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint16_t num)
         return;
     }
 
-    cJSON_AddNumberToObject(parser_root, "number", num);
+    cJSON_AddStringToObject(parser_root, "number", num_info);
     atoh(buffer, 8, (uint8_t *)&timestamp, sizeof(timestamp));
     item = cJSON_GetObjectItem(root, "timezone");
     if(item) {
