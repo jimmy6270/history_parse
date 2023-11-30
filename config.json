@@ -1,6 +1,11 @@
 {
+	"//":"时区，单位分钟，比如东八区就是480",
 	"timezone":480,
+
+	"//":"是否显示数据，如果只想看时间的话，就设置为0",
 	"format_enable":1,
+
+	"//":"数据格式，根据不同产品配置",
 	"format":[
 		{ "name": "温度", "offset": 0, "bitoffset": 0, "bitsize": 16, "symbol": 1, "accuracy": 10},
 		{ "name": "湿度", "offset": 2, "bitoffset": 0, "bitsize": 8, "symbol": 0, "accuracy": 2},
