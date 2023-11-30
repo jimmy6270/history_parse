@@ -34,7 +34,7 @@ int main(int arvc, char **argv)
         if(pconf) {
             memset(pconf, 0, size + 1);
             size_t length = fread(pconf, 1, size, fp);
-            if(length == size) {
+            if(length) {
                 jsonroot = cJSON_Parse(pconf);
                 if (jsonroot != NULL) {
                     // char *json_out = NULL;
