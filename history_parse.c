@@ -16,6 +16,7 @@
 static bool atoh(uint8_t *buffer_in, uint8_t size_in, uint8_t *buffer_out, uint8_t size_out);
 static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint8_t *num_info);
 static void format_convert(uint8_t sign, uint8_t byte_offset, uint8_t bit_offset, uint8_t bit_length, uint32_t accuracy, uint8_t *buffer, cJSON *element);
+static void str_trim_space(char *str);
 
 int main(int argc, char **argv)
 {
@@ -53,6 +54,9 @@ int main(int argc, char **argv)
         }
         fclose(fp);
     }
+
+    //去除空格
+    str_trim_space(argv[1]);
 
     //计算总条数
     uint16_t total_count = 0;
@@ -285,4 +289,17 @@ static bool atoh(uint8_t *buffer_in, uint8_t size_in, uint8_t *buffer_out, uint8
     }
 
     return true;
+}
+
+static void str_trim_space(char *str)
+{
+    char *ptmp = str;
+
+    while(*str != 0) {
+        if(*str != ' ') {
+            *ptmp++ = *str;
+        }
+        ++str;
+    }
+    *ptmp = 0;
 }
