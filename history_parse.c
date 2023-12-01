@@ -121,7 +121,7 @@ static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint8_t *num_info)
         timbuf[strlen(timbuf)-1] = 0;
     }
     cJSON_AddNumberToObject(parser_root, "timestamp", timestamp);
-    cJSON_AddStringToObject(parser_root, "unix time", timbuf);
+    cJSON_AddStringToObject(parser_root, "localtime", timbuf);
 
     item = cJSON_GetObjectItem(root, "format_enable");
     if(item) {
