@@ -12,6 +12,9 @@
 #include <unistd.h>
 #include "time.h"
 #include "cJSON.h"
+#ifdef __WIN32__
+#include <windows.h>
+#endif
 
 static bool atoh(uint8_t *buffer_in, uint8_t size_in, uint8_t *buffer_out, uint8_t size_out);
 static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint8_t *num_info);
@@ -24,6 +27,10 @@ int main(int argc, char **argv)
     char *pconf = NULL;
     FILE *fp = NULL;
     cJSON *jsonroot = NULL;
+
+#ifdef __WIN32__
+    SetConsoleOutputCP(65001); //设置输出编码为UTF-8
+#endif
 
     if(argc != 2) {
         printf("Usage: %s <raw_data>\r\n", argv[0]);
