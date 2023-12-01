@@ -5,10 +5,12 @@
 	"//":"是否显示数据，如果只想看时间的话，就设置为0",
 	"format_enable":1,
 
-	"//":"数据格式，根据不同产品配置",
+	"//":"数据格式，根据不同产品配置, sign=-1会根据数据里的符号位自动匹配",
 	"format":[
-		{ "name": "温度", "offset": 0, "bitoffset": 0, "bitsize": 16, "sign": 1, "accuracy": 10},
-		{ "name": "湿度", "offset": 2, "bitoffset": 0, "bitsize": 8, "sign": 0, "accuracy": 2},
-		{ "name": "状态", "offset": 3, "bitoffset": 0, "bitsize": 8, "sign": 0, "accuracy": 1}
+		{ "name": "chan", "offset": 0, "bitoffset": 0, "bitsize": 8, "sign": 0, "accuracy": 1},
+		{ "name": "sign", "offset": 1, "bitoffset": 7, "bitsize": 1, "sign": 0, "accuracy": 1},
+		{ "name": "type", "offset": 1, "bitoffset": 2, "bitsize": 5, "sign": 0, "accuracy": 1},
+		{ "name": "succ", "offset": 1, "bitoffset": 1, "bitsize": 1, "sign": 0, "accuracy": 1},
+		{ "name": "data", "offset": 2, "bitoffset": 0, "bitsize": 32, "sign": -1, "accuracy": 1}
 	]
 }

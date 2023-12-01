@@ -106,7 +106,8 @@ static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint8_t *num_info)
     char *json_out = NULL;
     char timbuf[128] = {0};
     uint8_t enable = 0;
-    uint8_t sign = 0;
+    int8_t sign = 0;
+    int8_t auto_sign = 0;
     uint8_t bit_offset = 0;
     uint8_t bit_length = 0;
     uint8_t byte_offset = 0;
@@ -152,6 +153,9 @@ static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint8_t *num_info)
                     temp = cJSON_GetObjectItem(unit, "sign");
                     if(temp) {
                         sign = temp->valueint;
+                        if(sign == -1) {
+                            sign = auto_sign;
+                        } 
                     }
                     temp = cJSON_GetObjectItem(unit, "accuracy");
                     if(temp) {
@@ -170,6 +174,15 @@ static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint8_t *num_info)
                         bit_length = temp->valueint;
                     }
                     format_convert(sign, byte_offset, bit_offset, bit_length, accuracy, buffer+8, element);
+                    temp = cJSON_GetObjectItem(element, "name");
+                    if(temp) {
+                        if(!strcmp(temp->valuestring, "sign")) {
+                            temp = cJSON_GetObjectItem(element, "value");
+                            if(temp) {
+                                auto_sign = temp->valueint;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -186,13 +199,14 @@ static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint8_t *num_info)
 static void format_convert(uint8_t sign, uint8_t byte_offset, uint8_t bit_offset, uint8_t bit_length, uint32_t accuracy, uint8_t *buffer, cJSON *element)
 {
     uint8_t bytes = (bit_length%8)?(bit_length/8+1):(bit_length/8);
+    // printf("sign:%d, byte_offset:%d, bit_offset:%d, bit_length:%d, accuracy:%d, bytes:%d\r\n", sign, byte_offset, bit_offset, bit_length, accuracy, bytes);
     if(bytes == 1 || bytes == 2 || bytes == 4) {
         switch(bytes) {
             case 1:
             {
                 uint8_t temp = 0;
                 atoh(buffer+byte_offset*2, 2, (uint8_t *)&temp, sizeof(temp));
-                temp = (temp >> bit_offset);
+                temp = (temp >> bit_offset) & ((1 << bit_length) - 1);
                 if(!bit_offset && sign) {
                     char temp1 = temp;
                     if(accuracy > 1) {
@@ -215,7 +229,7 @@ static void format_convert(uint8_t sign, uint8_t byte_offset, uint8_t bit_offset
             {
                 uint16_t temp = 0;
                 atoh(buffer+byte_offset*2, 4, (uint8_t *)&temp, sizeof(temp));
-                temp = (temp >> bit_offset);
+                temp = (temp >> bit_offset) & ((1 << bit_length) - 1);
                 if(!bit_offset && sign) {
                     short temp1 = temp;
                     if(accuracy > 1) {
@@ -238,7 +252,7 @@ static void format_convert(uint8_t sign, uint8_t byte_offset, uint8_t bit_offset
             {
                 uint32_t temp = 0;
                 atoh(buffer+byte_offset*2, 8, (uint8_t *)&temp, sizeof(temp));
-                temp = (temp >> bit_offset);
+                temp = (temp >> bit_offset) & ((1 << bit_length) - 1);
                 if(!bit_offset && sign) {
                     int temp1 = temp;
                     if(accuracy > 1) {
