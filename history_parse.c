@@ -17,7 +17,7 @@
 #endif
 
 static bool atoh(uint8_t *buffer_in, uint8_t size_in, uint8_t *buffer_out, uint8_t size_out);
-static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint8_t *num_info);
+static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint8_t *num_info, uint8_t type);
 static void format_convert(uint8_t sign, uint8_t byte_offset, uint8_t bit_offset, uint8_t bit_length, uint32_t accuracy, uint8_t *buffer, cJSON *element);
 static void str_trim_space(char *str);
 
@@ -65,30 +65,59 @@ int main(int argc, char **argv)
     //去除空格
     str_trim_space(argv[1]);
 
-    //计算总条数
-    uint16_t total_count = 0;
-    pdata = argv[1];
-    do {
-        pdata = strstr(pdata, "20ce");
-        if(pdata) {
-            total_count++;
-            pdata = pdata+2;
-        }
-    } while(pdata);
+    do {//20ce解析
+        //计算总条数
+        uint16_t total_count = 0;
+        pdata = argv[1];
+        do {
+            pdata = strstr(pdata, "20ce");
+            if(pdata) {
+                total_count++;
+                pdata = pdata+2;
+            }
+        } while(pdata);
 
-    //逐条解析数据
-    uint16_t count = 0;
-    pdata = argv[1];
-    do {
-        char buffer[128] = {0};
-        pdata = strstr(pdata, "20ce");
-        if(pdata) {
-            count++;
-            snprintf(buffer, sizeof(buffer), "%d/%d", count, total_count);
-            data_parse_and_dump(jsonroot, pdata+4, buffer);
-            pdata = pdata+2;
-        }
-    } while(pdata);
+        //逐条解析数据
+        uint16_t count = 0;
+        pdata = argv[1];
+        do {
+            char buffer[128] = {0};
+            pdata = strstr(pdata, "20ce");
+            if(pdata) {
+                count++;
+                snprintf(buffer, sizeof(buffer), "%d/%d", count, total_count);
+                data_parse_and_dump(jsonroot, pdata+4, buffer, 0);
+                pdata = pdata+2;
+            }
+        } while(pdata);
+    } while(0);
+
+    do {//20cd解析
+        //计算总条数
+        uint16_t total_count = 0;
+        pdata = argv[1];
+        do {
+            pdata = strstr(pdata, "20cd");
+            if(pdata) {
+                total_count++;
+                pdata = pdata+2;
+            }
+        } while(pdata);
+
+        //逐条解析数据
+        uint16_t count = 0;
+        pdata = argv[1];
+        do {
+            char buffer[128] = {0};
+            pdata = strstr(pdata, "20cd");
+            if(pdata) {
+                count++;
+                snprintf(buffer, sizeof(buffer), "%d/%d", count, total_count);
+                data_parse_and_dump(jsonroot, pdata+4, buffer, 1);
+                pdata = pdata+2;
+            }
+        } while(pdata);
+    } while(0);
 
     if(pconf) {
         free(pconf);
@@ -97,7 +126,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint8_t *num_info)
+static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint8_t *num_info, uint8_t type)
 {
     cJSON *parser_root = cJSON_CreateObject();
     cJSON *item = NULL; 
@@ -136,55 +165,67 @@ static void data_parse_and_dump(cJSON *root, uint8_t *buffer, uint8_t *num_info)
         enable = item->valueint;
     }
     if(root && enable) {
-        cJSON *array = cJSON_CreateArray();
-        item = cJSON_GetObjectItem(root, "format");
-        if (item != NULL && array != NULL) {
-            cJSON_AddItemToObject(parser_root, "data", array);
-            int count = cJSON_GetArraySize(item);
-            for (int j = 0; j < count; j++) {
-                unit = cJSON_GetArrayItem(item, j);
-                if(unit) {
-                    cJSON *element = cJSON_CreateObject();
-                    cJSON_AddItemToArray(array, element);
-                    temp = cJSON_GetObjectItem(unit, "name");
-                    if(temp) {
-                        cJSON_AddStringToObject(element, "name", temp->valuestring);
-                    }
-                    temp = cJSON_GetObjectItem(unit, "sign");
-                    if(temp) {
-                        sign = temp->valueint;
-                        if(sign == -1) {
-                            sign = auto_sign;
-                        } 
-                    }
-                    temp = cJSON_GetObjectItem(unit, "accuracy");
-                    if(temp) {
-                        accuracy = temp->valueint;
-                    }
-                    temp = cJSON_GetObjectItem(unit, "offset");
-                    if(temp) {
-                        byte_offset = temp->valueint;
-                    }
-                    temp = cJSON_GetObjectItem(unit, "bitoffset");
-                    if(temp) {
-                        bit_offset = temp->valueint;
-                    }
-                    temp = cJSON_GetObjectItem(unit, "bitsize");
-                    if(temp) {
-                        bit_length = temp->valueint;
-                    }
-                    format_convert(sign, byte_offset, bit_offset, bit_length, accuracy, buffer+8, element);
-                    temp = cJSON_GetObjectItem(element, "name");
-                    if(temp) {
-                        if(!strcmp(temp->valuestring, "sign")) {
-                            temp = cJSON_GetObjectItem(element, "value");
-                            if(temp) {
-                                auto_sign = temp->valueint;
+        if(type == 0) {
+            cJSON *array = cJSON_CreateArray();
+            item = cJSON_GetObjectItem(root, "format");
+            if (item != NULL && array != NULL) {
+                cJSON_AddItemToObject(parser_root, "data", array);
+                int count = cJSON_GetArraySize(item);
+                for (int j = 0; j < count; j++) {
+                    unit = cJSON_GetArrayItem(item, j);
+                    if(unit) {
+                        cJSON *element = cJSON_CreateObject();
+                        cJSON_AddItemToArray(array, element);
+                        temp = cJSON_GetObjectItem(unit, "name");
+                        if(temp) {
+                            cJSON_AddStringToObject(element, "name", temp->valuestring);
+                        }
+                        temp = cJSON_GetObjectItem(unit, "sign");
+                        if(temp) {
+                            sign = temp->valueint;
+                            if(sign == -1) {
+                                sign = auto_sign;
+                            } 
+                        }
+                        temp = cJSON_GetObjectItem(unit, "accuracy");
+                        if(temp) {
+                            accuracy = temp->valueint;
+                        }
+                        temp = cJSON_GetObjectItem(unit, "offset");
+                        if(temp) {
+                            byte_offset = temp->valueint;
+                        }
+                        temp = cJSON_GetObjectItem(unit, "bitoffset");
+                        if(temp) {
+                            bit_offset = temp->valueint;
+                        }
+                        temp = cJSON_GetObjectItem(unit, "bitsize");
+                        if(temp) {
+                            bit_length = temp->valueint;
+                        }
+                        format_convert(sign, byte_offset, bit_offset, bit_length, accuracy, buffer+8, element);
+                        temp = cJSON_GetObjectItem(element, "name");
+                        if(temp) {
+                            if(!strcmp(temp->valuestring, "sign")) {
+                                temp = cJSON_GetObjectItem(element, "value");
+                                if(temp) {
+                                    auto_sign = temp->valueint;
+                                }
                             }
                         }
                     }
                 }
             }
+        } else if(type == 1) {
+            int count = 0;
+            for(count = 0; count < sizeof(timbuf)-1; count++) {
+                if(!buffer[8+count]) {
+                    break;
+                }
+            }
+            memset(timbuf, 0, sizeof(timbuf));
+            atoh(buffer+8, count, (uint8_t *)timbuf, sizeof(timbuf));
+            cJSON_AddStringToObject(parser_root, "data", timbuf);
         }
     }
 
@@ -252,7 +293,11 @@ static void format_convert(uint8_t sign, uint8_t byte_offset, uint8_t bit_offset
             {
                 uint32_t temp = 0;
                 atoh(buffer+byte_offset*2, 8, (uint8_t *)&temp, sizeof(temp));
-                temp = (temp >> bit_offset) & ((1 << bit_length) - 1);
+                if(bit_length < 32) {
+                    temp = (temp >> bit_offset) & ((1 << bit_length) - 1);
+                } else {
+                    temp = (temp >> bit_offset);
+                }
                 if(!bit_offset && sign) {
                     int temp1 = temp;
                     if(accuracy > 1) {
